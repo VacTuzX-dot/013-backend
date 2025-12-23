@@ -179,18 +179,200 @@ app.get("/ping", async (req, res) => {
  *     tags:
  *       - Health
  *     summary: Root endpoint
- *     description: Returns a simple message to confirm server is running
+ *     description: Returns the minimalist home page with API documentation link
  *     responses:
  *       200:
- *         description: Server is running
+ *         description: Home page
  *         content:
- *           text/plain:
+ *           text/html:
  *             schema:
  *               type: string
- *               example: "✅ Server is running on cloud. Go to /ping to check its status."
  */
 app.get("/", (req, res) => {
-  res.send("✅ Server is running on cloud. Go to /ping to check its status.");
+  const homeHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VacTuz API</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafafa;
+      --text: #0a0a0a;
+      --text-muted: #52525b;
+      --border: #e4e4e7;
+      --border-hover: #a1a1aa;
+      --btn-bg: #0a0a0a;
+      --btn-text: #fafafa;
+      --btn-secondary-bg: transparent;
+      --btn-secondary-hover: #f4f4f5;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --border: #27272a;
+        --border-hover: #3f3f46;
+        --btn-bg: #fafafa;
+        --btn-text: #0a0a0a;
+        --btn-secondary-bg: transparent;
+        --btn-secondary-hover: #18181b;
+        --shadow: rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    .container {
+      max-width: 600px;
+      text-align: center;
+    }
+    
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      color: #22c55e;
+      margin-bottom: 2rem;
+    }
+    
+    .status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    
+    .description {
+      font-size: 1.125rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+    
+    .links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+    }
+    
+    .link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--shadow);
+    }
+    
+    .link-secondary {
+      background: var(--btn-secondary-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .link-secondary:hover {
+      background: var(--btn-secondary-hover);
+      border-color: var(--border-hover);
+    }
+    
+    .footer {
+      position: fixed;
+      bottom: 2rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="status">Online</div>
+    <h1>VacTuz API</h1>
+    <p class="description">
+      A RESTful backend service providing authentication, user management, 
+      and data operations. Built with Express.js and MySQL for reliable 
+      and scalable performance.
+    </p>
+    <div class="links">
+      <a href="/api-docs" class="link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        API Documentation
+      </a>
+      <a href="/ping" class="link link-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        Health Check
+      </a>
+    </div>
+  </div>
+  <div class="footer">© 2024 VacTuz</div>
+</body>
+</html>`;
+  res.setHeader("Content-Type", "text/html");
+  res.send(homeHtml);
 });
 
 // Users routes
