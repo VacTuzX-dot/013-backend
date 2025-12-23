@@ -3,7 +3,7 @@ import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import verifyToken from "./middleware/auth.js";
-import { specs } from "./swagger.js";
+import { specs, generateSpec } from "./swagger.js";
 import { db, POOL_SIZE, DB_NAME } from "./config/db.js";
 import usersRouter from "./routes/users.js";
 
@@ -41,9 +41,14 @@ app.get("/favicon.ico", (req, res) => {
 // Swagger UI setup - Vercel serverless compatible using CDN
 // Generate HTML with CDN links since Vercel can't serve static files from node_modules
 app.get("/api-docs", (req, res) => {
+  const lang = req.query.lang === "th" ? "th" : "en";
+  const otherLang = lang === "th" ? "en" : "th";
+  const langLabel = lang === "th" ? "🇹🇭 TH" : "🇺🇸 EN";
+  const otherLangLabel = lang === "th" ? "🇺🇸 EN" : "🇹🇭 TH";
+
   const swaggerHtml = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,29 +60,84 @@ app.get("/api-docs", (req, res) => {
     *, *:before, *:after { box-sizing: inherit; }
     body { margin: 0; background: #fafafa; }
     .swagger-ui .topbar { display: none; }
+    
+    .lang-switcher {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 9999;
+      display: flex;
+      gap: 8px;
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .lang-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    
+    .lang-btn.active {
+      background: #49cc90;
+      color: white;
+    }
+    
+    .lang-btn:not(.active) {
+      background: #f4f4f5;
+      color: #333;
+    }
+    
+    .lang-btn:not(.active):hover {
+      background: #e4e4e7;
+    }
   </style>
 </head>
 <body>
+  <div class="lang-switcher">
+    <a href="/api-docs?lang=${lang}" class="lang-btn active">${langLabel}</a>
+    <a href="/api-docs?lang=${otherLang}" class="lang-btn">${otherLangLabel}</a>
+  </div>
   <div id="swagger-ui"></div>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
   <script>
     window.onload = function() {
-      SwaggerUIBundle({
-        spec: ${JSON.stringify(specs)},
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        persistAuthorization: true,
-        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-        plugins: [SwaggerUIBundle.plugins.DownloadUrl],
-        layout: "StandaloneLayout"
-      });
+      // Fetch spec based on language
+      fetch('/api-docs/spec?lang=${lang}')
+        .then(res => res.json())
+        .then(spec => {
+          SwaggerUIBundle({
+            spec: spec,
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            persistAuthorization: true,
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+            plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+            layout: "StandaloneLayout"
+          });
+        });
     };
   </script>
 </body>
 </html>`;
   res.setHeader("Content-Type", "text/html");
   res.send(swaggerHtml);
+});
+
+// API endpoint to serve spec in different languages
+app.get("/api-docs/spec", (req, res) => {
+  const lang = req.query.lang === "th" ? "th" : "en";
+  const spec = generateSpec(lang);
+  res.json(spec);
 });
 
 app.disable("x-powered-by");

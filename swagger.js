@@ -1,11 +1,9 @@
 import swaggerUi from "swagger-ui-express";
 
-// Define OpenAPI spec directly (no file reading needed - works on Vercel)
-const specs = {
-  openapi: "3.0.0",
-  info: {
+// Translations for Thai and English
+const translations = {
+  en: {
     title: "🚀 BackEnd API",
-    version: "1.0.0",
     description: `
 # Welcome to the BackEnd API Documentation
 
@@ -56,637 +54,554 @@ Now you can access protected endpoints! 🎉
 
 ---
     `,
-    contact: {
-      name: "API Support",
-      email: "taweesaknumma@gmail.com",
-    },
-    license: {
-      name: "MIT",
-      url: "https://opensource.org/licenses/MIT",
-    },
-  },
-  externalDocs: {
-    description: "📖 Learn more about this API",
-    url: "https://github.com/VacTuzX-dot/013-backend",
-  },
-  servers: [
-    {
-      url: "http://localhost:3000",
-      description: "🖥️ Development Server",
-    },
-    {
-      url: "https://013-backend.vercel.app",
-      description: "🌐 Production Server",
-    },
-  ],
-  tags: [
-    {
-      name: "Health",
-      description:
+    externalDocs: "📖 Learn more about this API",
+    tags: {
+      health:
         "🏥 **Health Check Endpoints** — Monitor server and database status",
+      auth: "🔐 **Authentication** — Login, logout, and session management",
+      users: "👥 **User Management** — CRUD operations for user accounts",
+      misc: "🔧 **Miscellaneous** — Other utility endpoints",
     },
-    {
-      name: "Authentication",
-      description:
-        "🔐 **Authentication** — Login, logout, and session management",
-    },
-    {
-      name: "Users",
-      description: "👥 **User Management** — CRUD operations for user accounts",
-    },
-    {
-      name: "Misc",
-      description: "🔧 **Miscellaneous** — Other utility endpoints",
-    },
-  ],
-  paths: {
-    "/": {
-      get: {
-        tags: ["Health"],
+    endpoints: {
+      root: {
         summary: "Root endpoint",
-        description: "Returns a simple message to confirm server is running",
-        responses: {
-          200: {
-            description: "Server is running",
-            content: {
-              "text/plain": {
-                schema: {
-                  type: "string",
-                  example:
-                    "✅ Server is running on cloud. Go to /ping to check its status.",
-                },
-              },
-            },
-          },
-        },
+        desc: "Returns the minimalist home page with API documentation link",
       },
-    },
-    "/ping": {
-      get: {
-        tags: ["Health"],
+      ping: {
         summary: "Test DB connection",
-        description:
-          "Returns the current database server time to verify connectivity",
-        responses: {
-          200: {
-            description: "Database connection successful",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    time: { type: "string", format: "date-time" },
-                  },
-                },
-              },
-            },
-          },
-          500: { description: "Database error" },
-        },
+        desc: "Returns the current database server time to verify connectivity",
       },
-    },
-    "/users": {
-      get: {
-        tags: ["Users"],
+      getAllUsers: {
         summary: "📋 Get all users",
-        description:
-          "Retrieve a paginated list of all users. **🔒 Requires authentication** - Click Authorize button first!",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            in: "query",
-            name: "limit",
-            schema: { type: "integer", minimum: 1, maximum: 100, default: 10 },
-            description: "Number of users per page (max 100)",
-          },
-          {
-            in: "query",
-            name: "page",
-            schema: { type: "integer", minimum: 1, default: 1 },
-            description: "Page number",
-          },
-        ],
-        responses: {
-          200: {
-            description: "✅ List of users retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    count: { type: "integer", example: 5 },
-                    data: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/User" },
-                    },
-                    total: { type: "integer", example: 100 },
-                    page: { type: "integer", example: 1 },
-                    limit: { type: "integer", example: 10 },
-                  },
-                },
-              },
-            },
-          },
-          401: {
-            description:
-              "🔒 Unauthorized - Please login and use Authorize button first",
-          },
-          500: { description: "❌ Database error" },
-        },
+        desc: "Retrieve a paginated list of all users. **🔒 Requires authentication** - Click Authorize button first!",
       },
-      post: {
-        tags: ["Users"],
+      getUserById: {
+        summary: "👤 Get user by ID",
+        desc: "Retrieve a single user by their ID. **🔒 Requires authentication**",
+      },
+      createUser: {
         summary: "📝 Register new user",
-        description:
-          "Create a new user account. **No authentication required** - Use this to create an account, then login!",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/UserInput" },
-              examples: {
-                newUser: {
-                  summary: "Example new user",
-                  value: {
-                    firstname: "John",
-                    fullname: "John Doe",
-                    lastname: "Doe",
-                    username: "johndoe",
-                    password: "password123",
-                    status: "active",
-                  },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          201: {
-            description: "✅ User created successfully - Now you can login!",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    id: { type: "integer", example: 1 },
-                    firstname: { type: "string", example: "John" },
-                    fullname: { type: "string", example: "John Doe" },
-                    lastname: { type: "string", example: "Doe" },
-                    username: { type: "string", example: "johndoe" },
-                    status: {
-                      type: "string",
-                      example: "active",
-                      description: "User account status",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          400: { description: "❌ Bad request - Missing required fields" },
-          500: {
-            description: "❌ Database error (possibly duplicate username)",
-          },
-        },
+        desc: "Create a new user account. **No authentication required** - Use this to create an account, then login!",
       },
-    },
-    "/users/{id}": {
-      get: {
-        tags: ["Users"],
-        summary: "Get user by ID",
-        description: "Retrieve a single user by their ID",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            in: "path",
-            name: "id",
-            required: true,
-            schema: { type: "integer" },
-            description: "User ID",
-          },
-        ],
-        responses: {
-          200: {
-            description: "User found",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    data: { $ref: "#/components/schemas/User" },
-                  },
-                },
-              },
-            },
-          },
-          401: { description: "Unauthorized" },
-          404: { description: "User not found" },
-          500: { description: "Database error" },
-        },
+      updateUser: {
+        summary: "✏️ Update user",
+        desc: "Update an existing user's information. **🔒 Requires authentication**",
       },
-      put: {
-        tags: ["Users"],
-        summary: "Update user",
-        description: "Update an existing user's information",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            in: "path",
-            name: "id",
-            required: true,
-            schema: { type: "integer" },
-            description: "User ID",
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  firstname: { type: "string" },
-                  fullname: { type: "string" },
-                  lastname: { type: "string" },
-                  username: { type: "string" },
-                  password: { type: "string" },
-                  status: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: "User updated successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    message: {
-                      type: "string",
-                      example: "User updated successfully",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          400: { description: "No fields to update" },
-          401: { description: "Unauthorized" },
-          404: { description: "User not found" },
-          500: { description: "Database error" },
-        },
+      deleteUser: {
+        summary: "🗑️ Delete user",
+        desc: "Delete a user by their ID. **🔒 Requires authentication**",
       },
-      delete: {
-        tags: ["Users"],
-        summary: "Delete user",
-        description: "Delete a user by their ID",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            in: "path",
-            name: "id",
-            required: true,
-            schema: { type: "integer" },
-            description: "User ID",
-          },
-        ],
-        responses: {
-          200: {
-            description: "User deleted successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    message: {
-                      type: "string",
-                      example: "User deleted successfully",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          401: { description: "Unauthorized" },
-          404: { description: "User not found" },
-          500: { description: "Database error" },
-        },
-      },
-    },
-    "/login": {
-      post: {
-        tags: ["Authentication"],
+      login: {
         summary: "🔑 User login",
-        description:
-          "Authenticate with username and password to receive a JWT token. Use this token in the Authorize button to access protected endpoints.",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/LoginInput" },
-              examples: {
-                demo: {
-                  summary: "Demo credentials",
-                  value: {
-                    username: "testuser",
-                    password: "password123",
-                  },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description:
-              "✅ Login successful - Copy the token and use it in Authorize button",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string", example: "Login successful" },
-                    token: {
-                      type: "string",
-                      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                      description:
-                        "JWT token - Copy this and paste in Authorize button (valid for 1 hour)",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          400: {
-            description: "❌ Missing required fields (username or password)",
-          },
-          401: {
-            description:
-              "❌ Invalid credentials - User not found or wrong password",
-          },
-          500: { description: "❌ Login failed - Server error" },
-        },
+        desc: "Authenticate with username and password to receive a JWT token. Use this token in the Authorize button to access protected endpoints.",
       },
-    },
-    "/logout": {
-      post: {
-        tags: ["Authentication"],
+      logout: {
         summary: "🚪 User logout",
-        description:
-          "Invalidate the current user's session. **Requires authentication** - You must be logged in first.",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          200: {
-            description: "✅ Logged out successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    status: { type: "string", example: "ok" },
-                    message: { type: "string", example: "Logged out" },
-                  },
-                },
-              },
-            },
-          },
-          401: {
-            description: "🔒 Unauthorized - Please login and authorize first",
-          },
-        },
+        desc: "Invalidate the current user's session. **Requires authentication** - You must be logged in first.",
       },
-    },
-    "/api/data": {
-      get: {
-        tags: ["Misc"],
+      cors: {
         summary: "Test CORS endpoint",
-        description: "Simple endpoint to test CORS configuration",
-        responses: {
-          200: {
-            description: "CORS test successful",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string", example: "Hello, CORS!" },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
-        description:
-          "**How to use:** \n1. Login first using POST /login \n2. Copy the `token` from response \n3. Paste it here (without 'Bearer ' prefix) \n4. Click Authorize",
-      },
-    },
-    schemas: {
-      User: {
-        type: "object",
-        description: "User account information (without sensitive data)",
-        properties: {
-          id: {
-            type: "integer",
-            example: 1,
-            description: "Unique user identifier",
-          },
-          firstname: {
-            type: "string",
-            example: "John",
-            description: "User's first name",
-          },
-          fullname: {
-            type: "string",
-            example: "John Doe",
-            description: "User's full display name",
-          },
-          lastname: {
-            type: "string",
-            example: "Doe",
-            description: "User's last name",
-          },
-          username: {
-            type: "string",
-            example: "johndoe",
-            description: "Unique username for login",
-          },
-          status: {
-            type: "string",
-            example: "active",
-            enum: ["active", "inactive", "suspended"],
-            description: "Account status",
-          },
-          created_at: {
-            type: "string",
-            format: "date-time",
-            description: "Account creation timestamp",
-          },
-          updated_at: {
-            type: "string",
-            format: "date-time",
-            description: "Last update timestamp",
-          },
-        },
-      },
-      UserInput: {
-        type: "object",
-        description: "Required fields for creating a new user",
-        required: ["firstname", "fullname", "lastname", "username", "password"],
-        properties: {
-          firstname: {
-            type: "string",
-            example: "John",
-            minLength: 1,
-            maxLength: 50,
-            description: "User's first name",
-          },
-          fullname: {
-            type: "string",
-            example: "John Doe",
-            minLength: 1,
-            maxLength: 100,
-            description: "User's full display name",
-          },
-          lastname: {
-            type: "string",
-            example: "Doe",
-            minLength: 1,
-            maxLength: 50,
-            description: "User's last name",
-          },
-          username: {
-            type: "string",
-            example: "johndoe",
-            minLength: 3,
-            maxLength: 30,
-            description: "Unique username for login (3-30 characters)",
-          },
-          password: {
-            type: "string",
-            example: "password123",
-            minLength: 6,
-            description: "Password (minimum 6 characters)",
-          },
-          status: {
-            type: "string",
-            example: "active",
-            default: "active",
-            enum: ["active", "inactive"],
-            description: "Account status (defaults to 'active')",
-          },
-        },
-      },
-      LoginInput: {
-        type: "object",
-        description: "Credentials for user authentication",
-        required: ["username", "password"],
-        properties: {
-          username: {
-            type: "string",
-            example: "johndoe",
-            description: "Your registered username",
-          },
-          password: {
-            type: "string",
-            example: "password123",
-            description: "Your account password",
-          },
-        },
-      },
-      LoginResponse: {
-        type: "object",
-        description: "Successful login response with JWT token",
-        properties: {
-          message: { type: "string", example: "Login successful" },
-          token: {
-            type: "string",
-            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            description: "JWT token valid for 1 hour",
-          },
-        },
-      },
-      SuccessResponse: {
-        type: "object",
-        description: "Generic success response",
-        properties: {
-          status: { type: "string", example: "ok" },
-          message: {
-            type: "string",
-            example: "Operation completed successfully",
-          },
-        },
-      },
-      ErrorResponse: {
-        type: "object",
-        description: "Error response structure",
-        properties: {
-          status: { type: "string", example: "error" },
-          message: { type: "string", example: "An error occurred" },
-          code: {
-            type: "string",
-            nullable: true,
-            example: "ER_DUP_ENTRY",
-            description: "Error code (if available)",
-          },
-        },
+        desc: "Simple endpoint to test CORS configuration",
       },
     },
     responses: {
-      Unauthorized: {
-        description: "🔒 Authentication required or invalid token",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                error: { type: "string", example: "No token provided" },
-              },
+      success: "✅ Success",
+      unauthorized:
+        "🔒 Unauthorized - Please login and use Authorize button first",
+      notFound: "🔍 Not found",
+      badRequest: "❌ Bad request",
+      serverError: "❌ Server error",
+    },
+    params: {
+      limit: "Number of users per page (max 100)",
+      page: "Page number",
+    },
+    examples: {
+      newUser: "Example new user",
+      demo: "Demo credentials",
+    },
+    securityDesc:
+      "**How to use:** \\n1. Login first using POST /login \\n2. Copy the `token` from response \\n3. Paste it here (without 'Bearer ' prefix) \\n4. Click Authorize",
+  },
+  th: {
+    title: "🚀 BackEnd API",
+    description: `
+# ยินดีต้อนรับสู่เอกสาร API
+
+API นี้ให้บริการจัดการผู้ใช้และระบบยืนยันตัวตนอย่างครบครัน
+
+## 🔐 วิธีการยืนยันตัวตน
+
+### ขั้นตอนที่ 1: สมัครสมาชิก (ถ้ายังไม่มีบัญชี)
+ใช้ \`POST /users\` เพื่อสร้างบัญชีใหม่:
+\`\`\`json
+{
+  "firstname": "ทดสอบ",
+  "fullname": "ผู้ใช้ทดสอบ", 
+  "lastname": "ระบบ",
+  "username": "testuser",
+  "password": "password123"
+}
+\`\`\`
+
+### ขั้นตอนที่ 2: เข้าสู่ระบบ
+ใช้ \`POST /login\` กับข้อมูลของคุณ:
+\`\`\`json
+{
+  "username": "testuser",
+  "password": "password123"
+}
+\`\`\`
+
+### ขั้นตอนที่ 3: ยืนยันสิทธิ์
+1. คัดลอก \`token\` จากผลลัพธ์การเข้าสู่ระบบ
+2. คลิกปุ่ม **🔓 Authorize** (มุมบนขวา)
+3. วาง token ของคุณ (ไม่ต้องใส่ "Bearer ")
+4. คลิก **Authorize**
+
+ตอนนี้คุณสามารถเข้าถึง endpoint ที่ต้องยืนยันตัวตนได้แล้ว! 🎉
+
+## 📚 อ้างอิงด่วน
+| การกระทำ | Endpoint | ต้องยืนยันตัวตน |
+|--------|----------|-----------------|
+| ตรวจสอบสถานะ | \`GET /ping\` | ❌ ไม่ต้อง |
+| สมัครสมาชิก | \`POST /users\` | ❌ ไม่ต้อง |
+| เข้าสู่ระบบ | \`POST /login\` | ❌ ไม่ต้อง |
+| ออกจากระบบ | \`POST /logout\` | ✅ ต้อง |
+| ดูผู้ใช้ทั้งหมด | \`GET /users\` | ✅ ต้อง |
+| ดูผู้ใช้ตาม ID | \`GET /users/:id\` | ✅ ต้อง |
+| แก้ไขผู้ใช้ | \`PUT /users/:id\` | ✅ ต้อง |
+| ลบผู้ใช้ | \`DELETE /users/:id\` | ✅ ต้อง |
+
+---
+    `,
+    externalDocs: "📖 เรียนรู้เพิ่มเติมเกี่ยวกับ API นี้",
+    tags: {
+      health: "🏥 **ตรวจสอบสถานะ** — ตรวจสอบสถานะเซิร์ฟเวอร์และฐานข้อมูล",
+      auth: "🔐 **ยืนยันตัวตน** — เข้าสู่ระบบ, ออกจากระบบ และจัดการเซสชัน",
+      users: "👥 **จัดการผู้ใช้** — สร้าง อ่าน แก้ไข ลบ บัญชีผู้ใช้",
+      misc: "🔧 **อื่นๆ** — endpoint อื่นๆ",
+    },
+    endpoints: {
+      root: {
+        summary: "หน้าหลัก",
+        desc: "แสดงหน้าหลักพร้อมลิงก์ไปยังเอกสาร API",
+      },
+      ping: {
+        summary: "ทดสอบการเชื่อมต่อ DB",
+        desc: "คืนค่าเวลาปัจจุบันของเซิร์ฟเวอร์ฐานข้อมูลเพื่อยืนยันการเชื่อมต่อ",
+      },
+      getAllUsers: {
+        summary: "📋 ดูผู้ใช้ทั้งหมด",
+        desc: "ดึงรายชื่อผู้ใช้แบบแบ่งหน้า **🔒 ต้องยืนยันตัวตน** - คลิกปุ่ม Authorize ก่อน!",
+      },
+      getUserById: {
+        summary: "👤 ดูผู้ใช้ตาม ID",
+        desc: "ดึงข้อมูลผู้ใช้คนเดียวตาม ID **🔒 ต้องยืนยันตัวตน**",
+      },
+      createUser: {
+        summary: "📝 สมัครสมาชิกใหม่",
+        desc: "สร้างบัญชีผู้ใช้ใหม่ **ไม่ต้องยืนยันตัวตน** - ใช้สร้างบัญชีแล้วเข้าสู่ระบบ!",
+      },
+      updateUser: {
+        summary: "✏️ แก้ไขผู้ใช้",
+        desc: "อัปเดตข้อมูลผู้ใช้ที่มีอยู่ **🔒 ต้องยืนยันตัวตน**",
+      },
+      deleteUser: {
+        summary: "🗑️ ลบผู้ใช้",
+        desc: "ลบผู้ใช้ตาม ID **🔒 ต้องยืนยันตัวตน**",
+      },
+      login: {
+        summary: "🔑 เข้าสู่ระบบ",
+        desc: "ยืนยันตัวตนด้วย username และ password เพื่อรับ JWT token จากนั้นใช้ token ในปุ่ม Authorize เพื่อเข้าถึง endpoint ที่ต้องยืนยันตัวตน",
+      },
+      logout: {
+        summary: "🚪 ออกจากระบบ",
+        desc: "ยกเลิกเซสชันของผู้ใช้ปัจจุบัน **ต้องยืนยันตัวตน** - คุณต้องเข้าสู่ระบบก่อน",
+      },
+      cors: {
+        summary: "ทดสอบ CORS",
+        desc: "endpoint ง่ายๆ สำหรับทดสอบการตั้งค่า CORS",
+      },
+    },
+    responses: {
+      success: "✅ สำเร็จ",
+      unauthorized:
+        "🔒 ไม่ได้รับอนุญาต - กรุณาเข้าสู่ระบบและใช้ปุ่ม Authorize ก่อน",
+      notFound: "🔍 ไม่พบข้อมูล",
+      badRequest: "❌ คำขอไม่ถูกต้อง",
+      serverError: "❌ เซิร์ฟเวอร์ผิดพลาด",
+    },
+    params: {
+      limit: "จำนวนผู้ใช้ต่อหน้า (สูงสุด 100)",
+      page: "หมายเลขหน้า",
+    },
+    examples: {
+      newUser: "ตัวอย่างผู้ใช้ใหม่",
+      demo: "ข้อมูลตัวอย่าง",
+    },
+    securityDesc:
+      "**วิธีใช้:** \\n1. เข้าสู่ระบบด้วย POST /login \\n2. คัดลอก `token` จากผลลัพธ์ \\n3. วางที่นี่ (ไม่ต้องใส่ 'Bearer ') \\n4. คลิก Authorize",
+  },
+};
+
+// Function to generate spec for a specific language
+function generateSpec(lang = "en") {
+  const t = translations[lang] || translations.en;
+  return {
+    openapi: "3.0.0",
+    info: {
+      title: t.title,
+      version: "1.0.0",
+      description: t.description,
+      contact: { name: "API Support", email: "taweesaknumma@gmail.com" },
+      license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
+    },
+    externalDocs: {
+      description: t.externalDocs,
+      url: "https://github.com/VacTuzX-dot/013-backend",
+    },
+    servers: [
+      {
+        url: "https://013-backend.vercel.app",
+        description:
+          lang === "th" ? "🌐 เซิร์ฟเวอร์ Production" : "🌐 Production Server",
+      },
+      {
+        url: "http://localhost:3000",
+        description:
+          lang === "th"
+            ? "🖥️ เซิร์ฟเวอร์ Development"
+            : "🖥️ Development Server",
+      },
+    ],
+    tags: [
+      { name: "Health", description: t.tags.health },
+      { name: "Authentication", description: t.tags.auth },
+      { name: "Users", description: t.tags.users },
+      { name: "Misc", description: t.tags.misc },
+    ],
+    paths: {
+      "/": {
+        get: {
+          tags: ["Health"],
+          summary: t.endpoints.root.summary,
+          description: t.endpoints.root.desc,
+          responses: {
+            200: {
+              description: t.responses.success,
+              content: { "text/html": { schema: { type: "string" } } },
             },
           },
         },
       },
-      NotFound: {
-        description: "🔍 Resource not found",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                status: { type: "string", example: "not_found" },
-                message: { type: "string", example: "User not found" },
+      "/ping": {
+        get: {
+          tags: ["Health"],
+          summary: t.endpoints.ping.summary,
+          description: t.endpoints.ping.desc,
+          responses: {
+            200: {
+              description: t.responses.success,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      status: { type: "string", example: "ok" },
+                      time: { type: "string", format: "date-time" },
+                    },
+                  },
+                },
               },
             },
+            500: { description: t.responses.serverError },
           },
         },
       },
-      ServerError: {
-        description: "💥 Internal server error",
-        content: {
-          "application/json": {
-            schema: { $ref: "#/components/schemas/ErrorResponse" },
+      "/users": {
+        get: {
+          tags: ["Users"],
+          summary: t.endpoints.getAllUsers.summary,
+          description: t.endpoints.getAllUsers.desc,
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              in: "query",
+              name: "limit",
+              schema: {
+                type: "integer",
+                minimum: 1,
+                maximum: 100,
+                default: 10,
+              },
+              description: t.params.limit,
+            },
+            {
+              in: "query",
+              name: "page",
+              schema: { type: "integer", minimum: 1, default: 1 },
+              description: t.params.page,
+            },
+          ],
+          responses: {
+            200: {
+              description: t.responses.success,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      status: { type: "string", example: "ok" },
+                      count: { type: "integer" },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/User" },
+                      },
+                      total: { type: "integer" },
+                      page: { type: "integer" },
+                      limit: { type: "integer" },
+                    },
+                  },
+                },
+              },
+            },
+            401: { description: t.responses.unauthorized },
+            500: { description: t.responses.serverError },
+          },
+        },
+        post: {
+          tags: ["Users"],
+          summary: t.endpoints.createUser.summary,
+          description: t.endpoints.createUser.desc,
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserInput" },
+                examples: {
+                  newUser: {
+                    summary: t.examples.newUser,
+                    value: {
+                      firstname: "John",
+                      fullname: "John Doe",
+                      lastname: "Doe",
+                      username: "johndoe",
+                      password: "password123",
+                      status: "active",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: { description: t.responses.success },
+            400: { description: t.responses.badRequest },
+            500: { description: t.responses.serverError },
+          },
+        },
+      },
+      "/users/{id}": {
+        get: {
+          tags: ["Users"],
+          summary: t.endpoints.getUserById.summary,
+          description: t.endpoints.getUserById.desc,
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
+              schema: { type: "integer" },
+              description: "User ID",
+            },
+          ],
+          responses: {
+            200: { description: t.responses.success },
+            401: { description: t.responses.unauthorized },
+            404: { description: t.responses.notFound },
+            500: { description: t.responses.serverError },
+          },
+        },
+        put: {
+          tags: ["Users"],
+          summary: t.endpoints.updateUser.summary,
+          description: t.endpoints.updateUser.desc,
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
+              schema: { type: "integer" },
+              description: "User ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    firstname: { type: "string" },
+                    fullname: { type: "string" },
+                    lastname: { type: "string" },
+                    username: { type: "string" },
+                    password: { type: "string" },
+                    status: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: t.responses.success },
+            400: { description: t.responses.badRequest },
+            401: { description: t.responses.unauthorized },
+            404: { description: t.responses.notFound },
+            500: { description: t.responses.serverError },
+          },
+        },
+        delete: {
+          tags: ["Users"],
+          summary: t.endpoints.deleteUser.summary,
+          description: t.endpoints.deleteUser.desc,
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
+              schema: { type: "integer" },
+              description: "User ID",
+            },
+          ],
+          responses: {
+            200: { description: t.responses.success },
+            401: { description: t.responses.unauthorized },
+            404: { description: t.responses.notFound },
+            500: { description: t.responses.serverError },
+          },
+        },
+      },
+      "/login": {
+        post: {
+          tags: ["Authentication"],
+          summary: t.endpoints.login.summary,
+          description: t.endpoints.login.desc,
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/LoginInput" },
+                examples: {
+                  demo: {
+                    summary: t.examples.demo,
+                    value: { username: "testuser", password: "password123" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: t.responses.success,
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      message: { type: "string", example: "Login successful" },
+                      token: { type: "string", description: "JWT token" },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: t.responses.badRequest },
+            401: { description: t.responses.unauthorized },
+            500: { description: t.responses.serverError },
+          },
+        },
+      },
+      "/logout": {
+        post: {
+          tags: ["Authentication"],
+          summary: t.endpoints.logout.summary,
+          description: t.endpoints.logout.desc,
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: t.responses.success },
+            401: { description: t.responses.unauthorized },
+          },
+        },
+      },
+      "/api/data": {
+        get: {
+          tags: ["Misc"],
+          summary: t.endpoints.cors.summary,
+          description: t.endpoints.cors.desc,
+          responses: { 200: { description: t.responses.success } },
+        },
+      },
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: t.securityDesc,
+        },
+      },
+      schemas: {
+        User: {
+          type: "object",
+          properties: {
+            id: { type: "integer", example: 1 },
+            firstname: { type: "string", example: "John" },
+            fullname: { type: "string", example: "John Doe" },
+            lastname: { type: "string", example: "Doe" },
+            username: { type: "string", example: "johndoe" },
+            status: { type: "string", example: "active" },
+            created_at: { type: "string", format: "date-time" },
+            updated_at: { type: "string", format: "date-time" },
+          },
+        },
+        UserInput: {
+          type: "object",
+          required: [
+            "firstname",
+            "fullname",
+            "lastname",
+            "username",
+            "password",
+          ],
+          properties: {
+            firstname: { type: "string", example: "John" },
+            fullname: { type: "string", example: "John Doe" },
+            lastname: { type: "string", example: "Doe" },
+            username: { type: "string", example: "johndoe" },
+            password: { type: "string", example: "password123" },
+            status: { type: "string", example: "active", default: "active" },
+          },
+        },
+        LoginInput: {
+          type: "object",
+          required: ["username", "password"],
+          properties: {
+            username: { type: "string", example: "johndoe" },
+            password: { type: "string", example: "password123" },
           },
         },
       },
     },
-  },
-};
+  };
+}
 
-export { swaggerUi, specs };
+// Default English spec for backward compatibility
+const specs = generateSpec("en");
+
+export { swaggerUi, specs, generateSpec };
