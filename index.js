@@ -41,14 +41,9 @@ app.get("/favicon.ico", (req, res) => {
 // Swagger UI setup - Vercel serverless compatible using CDN
 // Generate HTML with CDN links since Vercel can't serve static files from node_modules
 app.get("/api-docs", (req, res) => {
-  const lang = req.query.lang === "th" ? "th" : "en";
-  const otherLang = lang === "th" ? "en" : "th";
-  const langLabel = lang === "th" ? "🇹🇭 TH" : "🇺🇸 EN";
-  const otherLangLabel = lang === "th" ? "🇺🇸 EN" : "🇹🇭 TH";
-
   const swaggerHtml = `
 <!DOCTYPE html>
-<html lang="${lang}">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -99,32 +94,103 @@ app.get("/api-docs", (req, res) => {
     .lang-btn:not(.active):hover {
       background: #e4e4e7;
     }
+    
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      color: #333;
+    }
+    
+    .loading.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
+  <div id="loading" class="loading">Loading...</div>
   <div class="lang-switcher">
-    <a href="/api-docs?lang=${lang}" class="lang-btn active">${langLabel}</a>
-    <a href="/api-docs?lang=${otherLang}" class="lang-btn">${otherLangLabel}</a>
+    <button id="btn-en" class="lang-btn" onclick="switchLang('en')">🇺🇸 EN</button>
+    <button id="btn-th" class="lang-btn" onclick="switchLang('th')">🇹🇭 TH</button>
   </div>
   <div id="swagger-ui"></div>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
   <script>
-    window.onload = function() {
-      // Fetch spec based on language
-      fetch('/api-docs/spec?lang=${lang}')
-        .then(res => res.json())
-        .then(spec => {
-          SwaggerUIBundle({
-            spec: spec,
-            dom_id: '#swagger-ui',
-            deepLinking: true,
-            persistAuthorization: true,
-            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-            plugins: [SwaggerUIBundle.plugins.DownloadUrl],
-            layout: "StandaloneLayout"
-          });
+    let swaggerUI = null;
+    
+    // Get saved language from localStorage or default to 'en'
+    function getSavedLang() {
+      return localStorage.getItem('api-docs-lang') || 'en';
+    }
+    
+    // Save language to localStorage
+    function saveLang(lang) {
+      localStorage.setItem('api-docs-lang', lang);
+    }
+    
+    // Update button states
+    function updateButtons(lang) {
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+      document.documentElement.lang = lang;
+    }
+    
+    // Load Swagger spec for given language
+    async function loadSpec(lang) {
+      const response = await fetch('/api-docs/spec?lang=' + lang);
+      return response.json();
+    }
+    
+    // Initialize or reinitialize SwaggerUI
+    async function initSwagger(lang) {
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hidden');
+      
+      try {
+        const spec = await loadSpec(lang);
+        
+        // Clear existing swagger-ui content
+        document.getElementById('swagger-ui').innerHTML = '';
+        
+        swaggerUI = SwaggerUIBundle({
+          spec: spec,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          persistAuthorization: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+          layout: "StandaloneLayout"
         });
+        
+        updateButtons(lang);
+        saveLang(lang);
+      } catch (err) {
+        console.error('Failed to load spec:', err);
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+    
+    // Switch language without page refresh
+    function switchLang(lang) {
+      if (getSavedLang() === lang) return;
+      initSwagger(lang);
+    }
+    
+    // Initialize on page load
+    window.onload = function() {
+      const savedLang = getSavedLang();
+      initSwagger(savedLang);
     };
   </script>
 </body>
