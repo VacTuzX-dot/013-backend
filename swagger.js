@@ -12,7 +12,7 @@ This API provides comprehensive user management and authentication services.
 ## 🔐 How to Authenticate
 
 ### Step 1: Register (if you don't have an account)
-Use \`POST /users\` to create a new account:
+Use \`POST /api/users\` to create a new account:
 \`\`\`json
 {
   "firstname": "Test",
@@ -43,14 +43,13 @@ Now you can access protected endpoints! 🎉
 ## 📚 Quick Reference
 | Action | Endpoint | Auth Required |
 |--------|----------|---------------|
-| Health Check | \`GET /ping\` | ❌ No |
-| Register | \`POST /users\` | ❌ No |
+| Register | \`POST /api/users\` | ❌ No |
 | Login | \`POST /login\` | ❌ No |
 | Logout | \`POST /logout\` | ✅ Yes |
-| List Users | \`GET /users\` | ✅ Yes |
-| Get User | \`GET /users/:id\` | ✅ Yes |
-| Update User | \`PUT /users/:id\` | ✅ Yes |
-| Delete User | \`DELETE /users/:id\` | ✅ Yes |
+| List Users | \`GET /api/users\` | ✅ Yes |
+| Get User | \`GET /api/users/:id\` | ✅ Yes |
+| Update User | \`PUT /api/users/:id\` | ✅ Yes |
+| Delete User | \`DELETE /api/users/:id\` | ✅ Yes |
 
 ---
     `,
@@ -133,7 +132,7 @@ API นี้ให้บริการจัดการผู้ใช้แ�
 ## 🔐 วิธีการยืนยันตัวตน
 
 ### ขั้นตอนที่ 1: สมัครสมาชิก (ถ้ายังไม่มีบัญชี)
-ใช้ \`POST /users\` เพื่อสร้างบัญชีใหม่:
+ใช้ \`POST /api/users\` เพื่อสร้างบัญชีใหม่:
 \`\`\`json
 {
   "firstname": "ทดสอบ",
@@ -164,14 +163,13 @@ API นี้ให้บริการจัดการผู้ใช้แ�
 ## 📚 อ้างอิงด่วน
 | การกระทำ | Endpoint | ต้องยืนยันตัวตน |
 |--------|----------|-----------------|
-| ตรวจสอบสถานะ | \`GET /ping\` | ❌ ไม่ต้อง |
-| สมัครสมาชิก | \`POST /users\` | ❌ ไม่ต้อง |
+| สมัครสมาชิก | \`POST /api/users\` | ❌ ไม่ต้อง |
 | เข้าสู่ระบบ | \`POST /login\` | ❌ ไม่ต้อง |
 | ออกจากระบบ | \`POST /logout\` | ✅ ต้อง |
-| ดูผู้ใช้ทั้งหมด | \`GET /users\` | ✅ ต้อง |
-| ดูผู้ใช้ตาม ID | \`GET /users/:id\` | ✅ ต้อง |
-| แก้ไขผู้ใช้ | \`PUT /users/:id\` | ✅ ต้อง |
-| ลบผู้ใช้ | \`DELETE /users/:id\` | ✅ ต้อง |
+| ดูผู้ใช้ทั้งหมด | \`GET /api/users\` | ✅ ต้อง |
+| ดูผู้ใช้ตาม ID | \`GET /api/users/:id\` | ✅ ต้อง |
+| แก้ไขผู้ใช้ | \`PUT /api/users/:id\` | ✅ ต้อง |
+| ลบผู้ใช้ | \`DELETE /api/users/:id\` | ✅ ต้อง |
 
 ---
     `,
@@ -295,31 +293,8 @@ function generateSpec(lang = "en") {
           },
         },
       },
-      "/ping": {
-        get: {
-          tags: ["Health"],
-          summary: t.endpoints.ping.summary,
-          description: t.endpoints.ping.desc,
-          responses: {
-            200: {
-              description: t.responses.success,
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      status: { type: "string", example: "ok" },
-                      time: { type: "string", format: "date-time" },
-                    },
-                  },
-                },
-              },
-            },
-            500: { description: t.responses.serverError },
-          },
-        },
-      },
-      "/users": {
+
+      "/api/users": {
         get: {
           tags: ["Users"],
           summary: t.endpoints.getAllUsers.summary,
@@ -402,7 +377,7 @@ function generateSpec(lang = "en") {
           },
         },
       },
-      "/users/{id}": {
+      "/api/users/{id}": {
         get: {
           tags: ["Users"],
           summary: t.endpoints.getUserById.summary,

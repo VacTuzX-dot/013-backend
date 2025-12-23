@@ -436,7 +436,7 @@ app.get("/", (req, res) => {
 });
 
 // Users routes
-app.use("/users", usersRouter);
+app.use("/api/users", usersRouter);
 
 /**
  * @openapi

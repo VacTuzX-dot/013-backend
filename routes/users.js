@@ -110,13 +110,13 @@ router.get("/", verifyToken, async (req, res) => {
 
     let sql =
       "SELECT id, firstname, fullname, lastname, username, status, created_at, updated_at FROM tbl_users";
-    const params = [];
     if (limit !== null) {
-      sql += " LIMIT ? OFFSET ?";
-      params.push(limit, offset);
+      // Use string interpolation for LIMIT/OFFSET since mysql2 prepared statements
+      // can have issues with integer parameters
+      sql += ` LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
     }
 
-    const dataPromise = runQuery(sql, params);
+    const dataPromise = runQuery(sql);
     const countPromise =
       limit !== null
         ? runQuery("SELECT COUNT(*) AS total FROM tbl_users")
