@@ -11,22 +11,48 @@ const specs = {
 
 This API provides comprehensive user management and authentication services.
 
-## 🔐 Authentication
-Most endpoints require JWT authentication. To authenticate:
-1. Call \`POST /login\` with your credentials
-2. Copy the returned \`token\`
-3. Click the **Authorize** button above
-4. Enter: \`Bearer <your-token>\`
+## 🔐 How to Authenticate
 
-## 📚 Quick Start
+### Step 1: Register (if you don't have an account)
+Use \`POST /users\` to create a new account:
+\`\`\`json
+{
+  "firstname": "Test",
+  "fullname": "Test User", 
+  "lastname": "User",
+  "username": "testuser",
+  "password": "password123"
+}
+\`\`\`
+
+### Step 2: Login
+Use \`POST /login\` with your credentials:
+\`\`\`json
+{
+  "username": "testuser",
+  "password": "password123"
+}
+\`\`\`
+
+### Step 3: Authorize
+1. Copy the \`token\` from login response
+2. Click the **🔓 Authorize** button (top right)
+3. Paste your token (without "Bearer " prefix)
+4. Click **Authorize**
+
+Now you can access protected endpoints! 🎉
+
+## 📚 Quick Reference
 | Action | Endpoint | Auth Required |
 |--------|----------|---------------|
-| Health Check | \`GET /ping\` | ❌ |
-| Login | \`POST /login\` | ❌ |
-| Register | \`POST /users\` | ❌ |
-| List Users | \`GET /users\` | ✅ |
-| Update User | \`PUT /users/:id\` | ✅ |
-| Delete User | \`DELETE /users/:id\` | ✅ |
+| Health Check | \`GET /ping\` | ❌ No |
+| Register | \`POST /users\` | ❌ No |
+| Login | \`POST /login\` | ❌ No |
+| Logout | \`POST /logout\` | ✅ Yes |
+| List Users | \`GET /users\` | ✅ Yes |
+| Get User | \`GET /users/:id\` | ✅ Yes |
+| Update User | \`PUT /users/:id\` | ✅ Yes |
+| Delete User | \`DELETE /users/:id\` | ✅ Yes |
 
 ---
     `,
@@ -123,87 +149,107 @@ Most endpoints require JWT authentication. To authenticate:
     "/users": {
       get: {
         tags: ["Users"],
-        summary: "Get all users",
-        description: "Retrieve a paginated list of all users",
+        summary: "📋 Get all users",
+        description:
+          "Retrieve a paginated list of all users. **🔒 Requires authentication** - Click Authorize button first!",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
             in: "query",
             name: "limit",
-            schema: { type: "integer", minimum: 1, maximum: 100 },
-            description: "Number of users per page",
+            schema: { type: "integer", minimum: 1, maximum: 100, default: 10 },
+            description: "Number of users per page (max 100)",
           },
           {
             in: "query",
             name: "page",
-            schema: { type: "integer", minimum: 1 },
+            schema: { type: "integer", minimum: 1, default: 1 },
             description: "Page number",
           },
         ],
         responses: {
           200: {
-            description: "List of users",
+            description: "✅ List of users retrieved successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
                     status: { type: "string", example: "ok" },
-                    count: { type: "integer" },
+                    count: { type: "integer", example: 5 },
                     data: {
                       type: "array",
                       items: { $ref: "#/components/schemas/User" },
                     },
-                    total: { type: "integer" },
-                    page: { type: "integer" },
-                    limit: { type: "integer" },
+                    total: { type: "integer", example: 100 },
+                    page: { type: "integer", example: 1 },
+                    limit: { type: "integer", example: 10 },
                   },
                 },
               },
             },
           },
-          401: { description: "Unauthorized" },
-          500: { description: "Database error" },
+          401: {
+            description:
+              "🔒 Unauthorized - Please login and use Authorize button first",
+          },
+          500: { description: "❌ Database error" },
         },
       },
       post: {
         tags: ["Users"],
-        summary: "Create a new user",
-        description: "Register a new user account",
+        summary: "📝 Register new user",
+        description:
+          "Create a new user account. **No authentication required** - Use this to create an account, then login!",
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: { $ref: "#/components/schemas/UserInput" },
+              examples: {
+                newUser: {
+                  summary: "Example new user",
+                  value: {
+                    firstname: "John",
+                    fullname: "John Doe",
+                    lastname: "Doe",
+                    username: "johndoe",
+                    password: "password123",
+                    status: "active",
+                  },
+                },
+              },
             },
           },
         },
         responses: {
           201: {
-            description: "User created successfully",
+            description: "✅ User created successfully - Now you can login!",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
                     status: { type: "string", example: "ok" },
-                    id: { type: "integer" },
-                    firstname: { type: "string" },
-                    fullname: { type: "string" },
-                    lastname: { type: "string" },
-                    username: { type: "string" },
-                    userStatus: {
+                    id: { type: "integer", example: 1 },
+                    firstname: { type: "string", example: "John" },
+                    fullname: { type: "string", example: "John Doe" },
+                    lastname: { type: "string", example: "Doe" },
+                    username: { type: "string", example: "johndoe" },
+                    status: {
                       type: "string",
-                      description:
-                        "User account status (e.g., active, inactive)",
+                      example: "active",
+                      description: "User account status",
                     },
                   },
                 },
               },
             },
           },
-          400: { description: "Bad request - missing required fields" },
-          500: { description: "Database error" },
+          400: { description: "❌ Bad request - Missing required fields" },
+          500: {
+            description: "❌ Database error (possibly duplicate username)",
+          },
         },
       },
     },
@@ -339,19 +385,30 @@ Most endpoints require JWT authentication. To authenticate:
     "/login": {
       post: {
         tags: ["Authentication"],
-        summary: "User login",
-        description: "Authenticate user and receive a JWT token",
+        summary: "🔑 User login",
+        description:
+          "Authenticate with username and password to receive a JWT token. Use this token in the Authorize button to access protected endpoints.",
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: { $ref: "#/components/schemas/LoginInput" },
+              examples: {
+                demo: {
+                  summary: "Demo credentials",
+                  value: {
+                    username: "testuser",
+                    password: "password123",
+                  },
+                },
+              },
             },
           },
         },
         responses: {
           200: {
-            description: "Login successful",
+            description:
+              "✅ Login successful - Copy the token and use it in Authorize button",
             content: {
               "application/json": {
                 schema: {
@@ -360,28 +417,36 @@ Most endpoints require JWT authentication. To authenticate:
                     message: { type: "string", example: "Login successful" },
                     token: {
                       type: "string",
-                      description: "JWT token for authentication",
+                      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      description:
+                        "JWT token - Copy this and paste in Authorize button (valid for 1 hour)",
                     },
                   },
                 },
               },
             },
           },
-          400: { description: "Missing required fields" },
-          401: { description: "Invalid credentials" },
-          500: { description: "Login failed" },
+          400: {
+            description: "❌ Missing required fields (username or password)",
+          },
+          401: {
+            description:
+              "❌ Invalid credentials - User not found or wrong password",
+          },
+          500: { description: "❌ Login failed - Server error" },
         },
       },
     },
     "/logout": {
       post: {
         tags: ["Authentication"],
-        summary: "User logout",
-        description: "Invalidate the current user's session",
+        summary: "🚪 User logout",
+        description:
+          "Invalidate the current user's session. **Requires authentication** - You must be logged in first.",
         security: [{ bearerAuth: [] }],
         responses: {
           200: {
-            description: "Logged out successfully",
+            description: "✅ Logged out successfully",
             content: {
               "application/json": {
                 schema: {
@@ -394,7 +459,9 @@ Most endpoints require JWT authentication. To authenticate:
               },
             },
           },
-          401: { description: "Unauthorized" },
+          401: {
+            description: "🔒 Unauthorized - Please login and authorize first",
+          },
         },
       },
     },
@@ -428,7 +495,7 @@ Most endpoints require JWT authentication. To authenticate:
         scheme: "bearer",
         bearerFormat: "JWT",
         description:
-          "Enter your JWT token. Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`",
+          "**How to use:** \n1. Login first using POST /login \n2. Copy the `token` from response \n3. Paste it here (without 'Bearer ' prefix) \n4. Click Authorize",
       },
     },
     schemas: {

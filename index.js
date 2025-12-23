@@ -368,7 +368,7 @@ app.get("/", (req, res) => {
       </a>
     </div>
   </div>
-  <div class="footer">© 2024 VacTuz</div>
+  <div class="footer">© 2025 VacTuz</div>
 </body>
 </html>`;
   res.setHeader("Content-Type", "text/html");
