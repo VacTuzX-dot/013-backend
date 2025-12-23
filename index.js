@@ -101,23 +101,55 @@ app.get("/api-docs", (req, res) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255,255,255,0.8);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 10000;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 16px;
-      color: #333;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
     }
     
     .loading.hidden {
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .loading-subtitle {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
-  <div id="loading" class="loading">Loading...</div>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading API Documentation</div>
+    <div class="loading-subtitle">Please wait...</div>
+  </div>
   <div class="lang-switcher">
     <button id="btn-en" class="lang-btn" onclick="switchLang('en')">🇺🇸 EN</button>
     <button id="btn-th" class="lang-btn" onclick="switchLang('th')">🇹🇭 TH</button>
@@ -127,6 +159,7 @@ app.get("/api-docs", (req, res) => {
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
   <script>
     let swaggerUI = null;
+    let isInitialLoad = true;
     
     // Get saved language from localStorage or default to 'en'
     function getSavedLang() {
@@ -152,9 +185,16 @@ app.get("/api-docs", (req, res) => {
     }
     
     // Initialize or reinitialize SwaggerUI
-    async function initSwagger(lang) {
+    async function initSwagger(lang, preserveScroll = false) {
       const loading = document.getElementById('loading');
-      loading.classList.remove('hidden');
+      
+      // Only show loading on initial page load
+      if (isInitialLoad) {
+        loading.classList.remove('hidden');
+      }
+      
+      // Save current scroll position if preserving
+      const scrollY = preserveScroll ? window.scrollY : 0;
       
       try {
         const spec = await loadSpec(lang);
@@ -174,17 +214,25 @@ app.get("/api-docs", (req, res) => {
         
         updateButtons(lang);
         saveLang(lang);
+        
+        // Restore scroll position after a small delay to let Swagger render
+        if (preserveScroll) {
+          setTimeout(() => {
+            window.scrollTo(0, scrollY);
+          }, 100);
+        }
       } catch (err) {
         console.error('Failed to load spec:', err);
       } finally {
         loading.classList.add('hidden');
+        isInitialLoad = false;
       }
     }
     
-    // Switch language without page refresh
+    // Switch language without page refresh, preserve scroll position
     function switchLang(lang) {
       if (getSavedLang() === lang) return;
-      initSwagger(lang);
+      initSwagger(lang, true);
     }
     
     // Initialize on page load
