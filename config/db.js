@@ -7,7 +7,8 @@ const envPath =
 
 loadEnv({ path: envPath, override: false });
 
-const POOL_SIZE = parseInt(process.env.DB_POOL_SIZE || "20", 10);
+// Optimized pool settings for handling multiple concurrent users
+const POOL_SIZE = parseInt(process.env.DB_POOL_SIZE || "50", 10);
 const DB_NAME = process.env.DB_NAME || "db_shop";
 
 const db = mysql.createPool({
@@ -20,7 +21,11 @@ const db = mysql.createPool({
   connectionLimit: POOL_SIZE,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
+  keepAliveInitialDelay: 10000,
+  // Connection timeout settings
+  connectTimeout: 10000,
+  // Idle connection timeout (release idle connections)
+  idleTimeout: 60000,
 });
 
 export { db, POOL_SIZE, DB_NAME };

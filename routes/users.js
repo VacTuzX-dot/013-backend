@@ -1,44 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import verifyToken from "../middleware/auth.js";
-import { db } from "../config/db.js";
+import { runQuery, sendDbError, requireFields } from "../utils/helpers.js";
 
 const router = express.Router();
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "10", 10);
 const MAX_PAGE_SIZE = parseInt(process.env.MAX_PAGE_SIZE || "100", 10);
-
-// --------------------------------------------------
-// SMALL UTILS
-// --------------------------------------------------
-
-async function runQuery(sql, params = []) {
-  if (params.length === 0) {
-    const [rows] = await db.query(sql);
-    return rows;
-  } else {
-    const [rows] = await db.execute(sql, params);
-    return rows;
-  }
-}
-
-function sendDbError(res, err, httpCode = 500) {
-  console.error("[DB ERROR]", err);
-  return res.status(httpCode).json({
-    status: "error",
-    message: err?.message ?? "Database error",
-    code: err?.code ?? null,
-  });
-}
-
-function requireFields(obj, keys) {
-  for (const k of keys) {
-    if (obj[k] === undefined || obj[k] === null || obj[k] === "") {
-      return k;
-    }
-  }
-  return null;
-}
 
 // --------------------------------------------------
 // ROUTES

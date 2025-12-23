@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import verifyToken from "./middleware/auth.js";
 import { specs, generateSpec } from "./swagger.js";
 import { db, POOL_SIZE, DB_NAME } from "./config/db.js";
+import { runQuery, sendDbError, requireFields } from "./utils/helpers.js";
 import usersRouter from "./routes/users.js";
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -257,6 +259,8 @@ app.get("/api-docs/spec", (req, res) => {
 app.disable("x-powered-by");
 app.set("etag", "strong");
 
+// Enable gzip compression for all responses
+app.use(compression());
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "64kb" }));
 
@@ -274,39 +278,7 @@ console.log("[DB CONFIG]", {
 });
 
 // --------------------------------------------------
-// 2) SMALL UTILS
-// --------------------------------------------------
-
-async function runQuery(sql, params = []) {
-  if (params.length === 0) {
-    const [rows] = await db.query(sql);
-    return rows;
-  } else {
-    const [rows] = await db.execute(sql, params);
-    return rows;
-  }
-}
-
-function sendDbError(res, err, httpCode = 500) {
-  console.error("[DB ERROR]", err);
-  return res.status(httpCode).json({
-    status: "error",
-    message: err?.message ?? "Database error",
-    code: err?.code ?? null,
-  });
-}
-
-function requireFields(obj, keys) {
-  for (const k of keys) {
-    if (obj[k] === undefined || obj[k] === null || obj[k] === "") {
-      return k;
-    }
-  }
-  return null;
-}
-
-// --------------------------------------------------
-// 3) ROUTES
+// 2) ROUTES
 // --------------------------------------------------
 
 /**
@@ -689,7 +661,7 @@ app.get("/api/data", (req, res) => {
 });
 
 // --------------------------------------------------
-// 4) GLOBAL FALLBACK ERROR HANDLER
+// 3) GLOBAL FALLBACK ERROR HANDLER
 // --------------------------------------------------
 app.use((err, req, res, next) => {
   console.error("[UNCAUGHT ERROR]", err);
@@ -700,13 +672,42 @@ app.use((err, req, res, next) => {
 });
 
 // --------------------------------------------------
-// 5) START SERVER
+// 4) START SERVER & GRACEFUL SHUTDOWN
 // --------------------------------------------------
 const PORT = process.env.PORT || 3000;
+let server;
+
 if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`✅ Server is running on port ${PORT}`);
   });
+
+  // Graceful shutdown handler
+  const gracefulShutdown = async (signal) => {
+    console.log(`\n🛑 ${signal} received. Shutting down gracefully...`);
+
+    server.close(async () => {
+      console.log("📴 HTTP server closed");
+
+      try {
+        await db.end();
+        console.log("🗄️ Database connections closed");
+      } catch (err) {
+        console.error("Error closing database:", err);
+      }
+
+      process.exit(0);
+    });
+
+    // Force close after 10 seconds
+    setTimeout(() => {
+      console.error("⚠️ Forced shutdown after timeout");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 }
 
 export default app;
